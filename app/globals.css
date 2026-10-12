@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ind: #1E0E62;
+  --color-ind2: #2D168F;
+  --color-ink: #14112B;
+  --color-night: #120840;
+  --color-org: #FF6A13;
+  --color-live: #E5004F;
+  --color-mint: #00E0A4;
+  --color-mute: #6B6890;
+  --color-line: #E1DFEC;
+  --color-bg: #EFEEF5;
+  --font-sans: var(--font-barlow), system-ui, sans-serif;
+  --font-display: var(--font-barlow-condensed), system-ui, sans-serif;
+}
+
+body { background: var(--color-bg); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
+.d { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; line-height: .95; letter-spacing: .005em; }
+.card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 2px rgba(20,17,43,.08); }
+.live { display: inline-flex; align-items: center; gap: 5px; background: var(--color-live); color: #fff; font-weight: 700; font-size: 11px; padding: 2px 7px; border-radius: 3px; letter-spacing: .05em; }
+.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.4s infinite; }
+@keyframes pulse { 50% { opacity: .3 } }
+.tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--color-ind2); }
+.noscroll::-webkit-scrollbar { display: none; } .noscroll { scrollbar-width: none; }

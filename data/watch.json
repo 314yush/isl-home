@@ -1,0 +1,14 @@
+{
+  "_readme": "Hand-edited. 'default' applies to every match unless overridden in 'matches' (keyed by ESPN event id). 'corrections' overrides scores/status if the feed is wrong. Times are IST.",
+  "updated": "2026-10-13",
+  "default": {
+    "broadcast": "Sony Sports Network (TV rollout pending)",
+    "streams": [
+      { "label": "Watch free on YouTube", "url": "https://www.youtube.com/@IndianSuperLeague", "free": true },
+      { "label": "SonyLIV", "url": "https://www.sonyliv.com/", "free": false }
+    ],
+    "note": "SonyLIV streams all matches; YouTube streams all matches free (EN/HI). TV coverage not live yet (Sportstar, 11 Oct)."
+  },
+  "matches": {},
+  "corrections": {}
+}
