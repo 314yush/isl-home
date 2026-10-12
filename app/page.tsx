@@ -9,6 +9,7 @@ import Table from "@/components/Table";
 import StaleBanner from "@/components/StaleBanner";
 import AutoRefresh from "@/components/AutoRefresh";
 import { Duotone } from "@/components/Hero";
+import { heroFor, photo, NEWS_IMAGES } from "@/lib/assets";
 import type { Match } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -67,8 +68,9 @@ export default async function Home() {
                 const h = clubOr(m.home.id, m.home.name, m.home.abbr), a = clubOr(m.away.id, m.away.name, m.away.abbr);
                 return (
                   <Link key={m.id} href={`/match/${m.id}`} className="card block hover:-translate-y-0.5 transition">
-                    <Duotone c1={h.primary} c2={a.primary} className="h-20 md:h-36">
-                      <span className="d absolute left-3 bottom-2 text-white text-[44px] drop-shadow">{m.home.score}-{m.away.score}</span>
+                    <Duotone c1={h.primary} c2={a.primary} img={heroFor(h.slug)} className="h-24 md:h-36">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <span className="d absolute left-3 bottom-2 text-white text-[44px] drop-shadow z-10">{m.home.score}-{m.away.score}</span>
                     </Duotone>
                     <div className="p-3.5">
                       <p className="tag">Full time · {fmtDay(m.kickoff)}</p>
@@ -82,9 +84,9 @@ export default async function Home() {
           <section>
             <div className="flex items-end justify-between mb-3"><h2 className="d text-ind text-[30px] md:text-[40px]">Elsewhere</h2><span className="text-xs text-mute">Headlines live on the publishers&apos; sites</span></div>
             <div className="grid sm:grid-cols-3 gap-3 md:gap-4">
-              {NEWS.map((n) => (
+              {NEWS.map((n, i) => (
                 <a key={n.url} href={n.url} target="_blank" rel="noopener" className="card block">
-                  <Duotone c1={n.c[0]} c2={n.c[1]} className="h-16 md:h-24" />
+                  <Duotone c1={n.c[0]} c2={n.c[1]} img={photo(NEWS_IMAGES[i])} tint={false} className="h-24 md:h-32" />
                   <div className="p-3.5"><p className="tag">{n.tag} ↗</p><p className="font-bold text-[16px] leading-tight mt-1">{n.t}</p></div>
                 </a>
               ))}
@@ -110,7 +112,7 @@ function HeroCard({ m }: { m: Match }) {
   const label = m.state === "in" ? "Live now" : m.state === "pre" ? "Next up" : "Latest result";
   return (
     <Link href={`/match/${m.id}`} className="block rounded-[10px] overflow-hidden">
-      <Duotone c1={h.primary} c2={a.primary} className="h-[340px] md:h-[440px]">
+      <Duotone c1={h.primary} c2={a.primary} img={heroFor(h.slug)} tint={false} className="h-[360px] md:h-[440px]">
         <div className="absolute inset-0 bg-gradient-to-t from-ind via-ind/50 to-transparent" />
         <div className="absolute left-5 right-5 md:left-10 md:right-10 bottom-6 md:bottom-9 text-white">
           {m.state === "in" ? <span className="live">LIVE {m.statusText}</span> : <span className="bg-org text-ind text-[11px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">{label}</span>}

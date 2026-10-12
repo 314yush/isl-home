@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+import type { Asset } from "@/lib/assets";
 export function Silhouette({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
   return (
     <svg viewBox="0 0 300 300" className={`absolute ${className}`} style={style} fill="currentColor" aria-hidden>
@@ -7,12 +9,25 @@ export function Silhouette({ className = "", style }: { className?: string; styl
     </svg>
   );
 }
-/** Image-led block without photos: duotone gradient + silhouette. */
-export function Duotone({ c1, c2, className = "", children }: { c1: string; c2: string; className?: string; children?: React.ReactNode }) {
+export function Credit({ a, className = "" }: { a: Asset; className?: string }) {
+  return <a href="/credits" className={`absolute z-10 text-[9.5px] md:text-[10px] text-white/80 bg-black/45 px-1.5 py-0.5 rounded-sm leading-tight max-w-[70%] truncate ${className}`}>📷 {a.credit}{a.license ? ` · ${a.license}` : ""}</a>;
+}
+/** Image-led block: real photo when available (with credit), else duotone gradient + silhouette. */
+export function Duotone({ c1, c2, img, className = "", tint = true, creditPos = "right-2 top-2", children }: { c1: string; c2: string; img?: Asset | null; className?: string; tint?: boolean; creditPos?: string; children?: React.ReactNode }) {
   return (
     <div className={`relative overflow-hidden ${className}`} style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
-      <div className="absolute inset-0" style={{ background: "radial-gradient(60% 80% at 75% 30%, rgba(255,255,255,.25), transparent)" }} />
-      <Silhouette className="right-[6%] bottom-0 h-[92%] text-black/45" />
+      {img ? (
+        <>
+          <img src={img.src} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          {tint && <div className="absolute inset-0 mix-blend-multiply opacity-40" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }} />}
+          <Credit a={img} className={creditPos} />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0" style={{ background: "radial-gradient(60% 80% at 75% 30%, rgba(255,255,255,.25), transparent)" }} />
+          <Silhouette className="right-[6%] bottom-0 h-[92%] text-black/45" />
+        </>
+      )}
       {children}
     </div>
   );

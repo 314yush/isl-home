@@ -3,6 +3,7 @@ import { BRAND } from "@/lib/brand";
 import { getAllMatches } from "@/lib/data";
 import Ticker from "./Ticker";
 import NavLinks from "./NavLinks";
+import LeagueLogo from "./LeagueLogo";
 
 export default async function Header() {
   const { matches } = await getAllMatches();
@@ -23,7 +24,7 @@ export default async function Header() {
           <span className="d text-[28px] md:text-[34px] tracking-wide">{BRAND.name}</span>
         </Link>
         <NavLinks />
-        <span className="ml-auto text-[13px] opacity-80">All times IST</span>
+        <span className="ml-auto flex items-center gap-3"><span className="text-[13px] opacity-80 hidden sm:inline">All times IST</span><LeagueLogo size={36} /></span>
       </header>
       <Ticker matches={tick} />
     </>

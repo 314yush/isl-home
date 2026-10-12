@@ -1,7 +1,7 @@
 # Matchday — fan-run ISL matchday hub
 
 Fan-run, no-ads, non-commercial Indian Super League hub: live scores ticker, matchday hub, fixtures in IST, table, match centre (events, stats, lineups on a pitch) and club pages.
-Not affiliated with the ISL, AIFF or any club. Club badges are monogram placeholders (no crests).
+Not affiliated with the ISL, AIFF or any club. Club crests, the league logo and photos are third-party assets listed in `lib/assets.ts` (one map; delete an entry to fall back to monograms/initials/gradients) and credited at `/credits` and `public/CREDITS.md`.
 
 > The site name is a placeholder. Rename it in **`lib/brand.ts`** (name, tagline, monogram); nothing else hard-codes it.
 

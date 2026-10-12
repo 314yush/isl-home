@@ -6,7 +6,9 @@ import Badge from "@/components/Badge";
 import MatchRow from "@/components/MatchRow";
 import Table from "@/components/Table";
 import StaleBanner from "@/components/StaleBanner";
-import { Silhouette } from "@/components/Hero";
+import { Credit } from "@/components/Hero";
+import Avatar from "@/components/Avatar";
+import { heroFor } from "@/lib/assets";
 import { fmtDay } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -28,13 +30,20 @@ export default async function ClubPage({ params }: P) {
   const light = ["#F4C300", "#58A6DD", "#F26A21"].includes(c.primary);
   const fg = light ? c.secondary : "#fff";
   const nextMatch = next[0];
+  const hero = heroFor(c.slug);
 
   return (
     <>
       <StaleBanner meta={{ ...meta, stale: meta.stale || qm.stale }} />
       <section className="relative overflow-hidden" style={{ background: c.primary, color: fg }}>
-        <div className="absolute right-0 top-0 bottom-0 w-[45%] md:w-[52%]" style={{ background: c.secondary, clipPath: "polygon(22% 0,100% 0,100% 100%,0 100%)", opacity: 0.9 }} />
-        <Silhouette className="right-[6%] bottom-0 h-[95%]" style={{ color: c.primary, opacity: 0.55 }} />
+        {hero && <div className="absolute inset-0 md:left-[38%]" style={{ clipPath: "polygon(14% 0,100% 0,100% 100%,0 100%)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={hero.src} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${c.primary} 0%, transparent 45%)` }} />
+        </div>}
+        <div className="absolute inset-0 md:hidden" style={{ background: `linear-gradient(90deg, ${c.primary} 55%, ${c.primary}88 100%)` }} />
+        <div className="absolute left-0 right-0 bottom-0 h-2" style={{ background: c.secondary }} />
+        {hero && <Credit a={hero} className="right-2 bottom-4" />}
         <div className="relative px-4 md:px-10 py-8 md:py-14 max-w-[62%] md:max-w-[56%]">
           <Badge id={c.id} size={88} />
           <h1 className="d text-[44px] md:text-[96px] mt-4 break-words">{c.name}</h1>
@@ -58,10 +67,10 @@ export default async function ClubPage({ params }: P) {
             {groups.map(([g, ps]) => (
               <div key={g} className="mb-4">
                 <p className="tag mb-2">{g}s</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                   {ps.sort((x, y) => Number(x.number ?? 99) - Number(y.number ?? 99)).map((p) => (
                     <div key={p.id} className="flex items-center gap-2.5 rounded-lg bg-bg p-2.5">
-                      <span className="d text-[26px] w-9 text-center" style={{ color: light ? c.secondary : c.primary }}>{p.number ?? "–"}</span>
+                      <Avatar id={p.id} name={p.name} size={44} bg={c.primary} fg={c.secondary} /><span className="d text-[22px] w-7 text-center" style={{ color: light ? c.secondary : c.primary }}>{p.number ?? "–"}</span>
                       <div className="min-w-0"><p className="font-bold text-[14px] leading-tight truncate">{p.name}</p><p className="text-[11px] text-mute">{p.age ? `${p.age} yrs` : ""}{p.nationality ? ` · ${p.nationality}` : ""}</p></div>
                     </div>
                   ))}

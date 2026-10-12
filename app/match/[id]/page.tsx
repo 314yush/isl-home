@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -9,7 +10,8 @@ import Badge from "@/components/Badge";
 import Pitch from "@/components/Pitch";
 import StaleBanner from "@/components/StaleBanner";
 import AutoRefresh from "@/components/AutoRefresh";
-import { Silhouette } from "@/components/Hero";
+import { Credit } from "@/components/Hero";
+import { heroFor } from "@/lib/assets";
 import type { MatchEvent } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +39,7 @@ export default async function MatchPage({ params }: P) {
   const { match: m, events, stats, lineups, attendance } = detail;
   const h = clubOr(m.home.id, m.home.name, m.home.abbr), a = clubOr(m.away.id, m.away.name, m.away.abbr);
   const w = watchFor(m.id);
+  const bg = heroFor(h.slug);
   const scorers = (tid: string) => events.filter((e) => ["goal", "own-goal", "penalty"].includes(e.kind) && e.teamId === tid)
     .map((e) => `${e.player.split(" ").slice(-1)[0]} ${e.minute}${e.kind === "own-goal" ? " (og)" : e.kind === "penalty" ? " (p)" : ""}`).join(" · ");
   // own goals are credited by ESPN to the benefiting team already
@@ -47,7 +50,7 @@ export default async function MatchPage({ params }: P) {
     <>
       <StaleBanner meta={meta} />
       <section className="text-white px-4 md:px-10 pt-7 pb-7 relative overflow-hidden" style={{ background: `linear-gradient(120deg, ${h.primary} 0%, #1E0E62 42%, #1E0E62 58%, ${a.primary} 100%)` }}>
-        <Silhouette className="left-[3%] -bottom-2 h-[110%] text-white/15" /><Silhouette className="right-[3%] -bottom-2 h-[110%] text-white/15" />
+        {bg && <><img src={bg.src} alt="" className="absolute inset-0 w-full h-full object-cover opacity-35 mix-blend-luminosity" /><Credit a={bg} className="right-2 bottom-2" /></>}
         <p className="relative text-center text-[12px] md:text-[13px] font-semibold opacity-85">{fmtDayLong(m.kickoff)} · {fmtTime(m.kickoff)} IST{m.venue ? ` · ${m.venue}` : ""}{m.city ? `, ${m.city}` : ""}</p>
         <div className="relative grid grid-cols-[1fr_auto_1fr] items-center mt-5 gap-2">
           <Link href={`/club/${h.slug}`} className="flex flex-col-reverse md:flex-row items-center md:justify-end gap-2 md:gap-5 text-center md:text-right">
