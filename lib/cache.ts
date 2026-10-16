@@ -1,7 +1,13 @@
 import { Redis } from "@upstash/redis";
 
 type Entry<T> = { data: T; fetchedAt: number };
-export type HealthRecord = { key: string; lastSuccess: number | null; lastAttempt: number; lastError: string | null; ttl: number };
+export type HealthRecord = {
+  key: string;
+  lastSuccess: number | null;
+  lastAttempt: number;
+  lastError: string | null;
+  ttl: number;
+};
 
 const g = globalThis as unknown as {
   __appMem?: Map<string, Entry<unknown>>;
@@ -14,23 +20,32 @@ const inflight = (g.__appInflight ??= new Map());
 
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
     : null;
 
 export const cacheBackend = redis ? "upstash-redis" : "memory";
 
 export const TTL = { live: 30, matchday: 60, long: 6 * 60 * 60 } as const;
 
-async function readStore<T>(key: string): Promise<Entry<T> | null> {
+async function readStore<T>(
+  key: string,
+  ttlSec: number,
+): Promise<Entry<T> | null> {
   const m = mem.get(key) as Entry<T> | undefined;
-  if (m) return m;
-  if (!redis) return null;
+  if (m && Date.now() - m.fetchedAt < ttlSec * 1000) return m;
+  if (!redis) return m ?? null;
   try {
     const r = await redis.get<Entry<T>>(`mdh:${key}`);
-    if (r) mem.set(key, r);
-    return r ?? null;
+    if (r && (!m || r.fetchedAt > m.fetchedAt)) {
+      mem.set(key, r);
+      return r;
+    }
+    return m ?? r ?? null;
   } catch {
-    return null;
+    return m ?? null;
   }
 }
 
@@ -38,21 +53,55 @@ async function writeStore<T>(key: string, e: Entry<T>) {
   mem.set(key, e);
   if (redis) {
     // keep stale copies around for 7 days so failures can fall back
-    try { await redis.set(`mdh:${key}`, e, { ex: 7 * 24 * 3600 }); } catch {}
+    try {
+      await redis.set(`mdh:${key}`, e, { ex: 7 * 24 * 3600 });
+    } catch {}
   }
 }
 
-export type Cached<T> = { data: T | null; fetchedAt: number | null; stale: boolean; error: string | null };
+export type Cached<T> = {
+  data: T | null;
+  fetchedAt: number | null;
+  stale: boolean;
+  error: string | null;
+};
 
 /**
  * Stale-while-error cache. Visitors only ever read through this; the provider is
  * called at most once per TTL per key (per instance), and on failure the last good
  * copy is served with stale=true.
  */
-export async function cached<T>(key: string, ttlSec: number, fetcher: () => Promise<T>, isEmpty?: (d: T) => boolean): Promise<Cached<T>> {
+export async function cached<T>(
+  key: string,
+  ttlSec: number,
+  fetcher: () => Promise<T>,
+  isEmpty?: (d: T) => boolean,
+): Promise<Cached<T>> {
   const now = Date.now();
-  const hit = await readStore<T>(key);
-  if (hit && now - hit.fetchedAt < ttlSec * 1000) return { data: hit.data, fetchedAt: hit.fetchedAt, stale: false, error: null };
+  const hit = await readStore<T>(key, ttlSec);
+  if (hit && now - hit.fetchedAt < ttlSec * 1000) {
+    health.set(key, {
+      key,
+      lastSuccess: hit.fetchedAt,
+      lastAttempt: now,
+      lastError: null,
+      ttl: ttlSec,
+    });
+    return {
+      data: hit.data,
+      fetchedAt: hit.fetchedAt,
+      stale: false,
+      error: null,
+    };
+  }
+  const previous = health.get(key);
+  if (previous?.lastError && now - previous.lastAttempt < 15_000)
+    return {
+      data: hit?.data ?? null,
+      fetchedAt: hit?.fetchedAt ?? null,
+      stale: true,
+      error: previous.lastError,
+    };
 
   let p = inflight.get(key) as Promise<T> | undefined;
   if (!p) {
@@ -60,12 +109,18 @@ export async function cached<T>(key: string, ttlSec: number, fetcher: () => Prom
     inflight.set(key, p);
     p.finally(() => inflight.delete(key)).catch(() => {});
   }
-  const rec: HealthRecord = health.get(key) ?? { key, lastSuccess: null, lastAttempt: now, lastError: null, ttl: ttlSec };
+  const rec: HealthRecord = health.get(key) ?? {
+    key,
+    lastSuccess: null,
+    lastAttempt: now,
+    lastError: null,
+    ttl: ttlSec,
+  };
   rec.lastAttempt = now;
   rec.ttl = ttlSec;
   try {
     const data = await p;
-    if (isEmpty && isEmpty(data) && hit) throw new Error("empty response");
+    if (isEmpty && isEmpty(data)) throw new Error("empty response");
     await writeStore(key, { data, fetchedAt: now });
     rec.lastSuccess = now;
     rec.lastError = null;
@@ -74,7 +129,13 @@ export async function cached<T>(key: string, ttlSec: number, fetcher: () => Prom
   } catch (e) {
     rec.lastError = e instanceof Error ? e.message : String(e);
     health.set(key, rec);
-    if (hit) return { data: hit.data, fetchedAt: hit.fetchedAt, stale: true, error: rec.lastError };
+    if (hit)
+      return {
+        data: hit.data,
+        fetchedAt: hit.fetchedAt,
+        stale: true,
+        error: rec.lastError,
+      };
     return { data: null, fetchedAt: null, stale: true, error: rec.lastError };
   }
 }

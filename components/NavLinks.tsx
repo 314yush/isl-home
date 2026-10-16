@@ -2,17 +2,37 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 export const NAV = [
-  { href: "/", label: "Matchday", match: (p: string) => p === "/" },
-  { href: "/matches", label: "Matches", match: (p: string) => p.startsWith("/match") },
+  { href: "/", label: "Home", match: (p: string) => p === "/" },
+  {
+    href: "/matches",
+    label: "Matches",
+    match: (p: string) => p.startsWith("/match"),
+  },
   { href: "/table", label: "Table", match: (p: string) => p === "/table" },
-  { href: "/clubs", label: "Clubs", match: (p: string) => p.startsWith("/club") },
+  {
+    href: "/clubs",
+    label: "Clubs",
+    match: (p: string) => p.startsWith("/club"),
+  },
+  { href: "/stats", label: "Stats", match: (p: string) => p === "/stats" },
+  {
+    href: "/stories",
+    label: "Stories",
+    match: (p: string) => p.startsWith("/stories"),
+  },
 ];
 export default function NavLinks() {
   const p = usePathname();
   return (
-    <nav className="d hidden md:flex gap-8 text-[21px] font-bold self-stretch">
+    <nav className="site-nav" aria-label="Main navigation">
       {NAV.map((n) => (
-        <Link key={n.href} href={n.href} className={`flex items-center border-b-4 pt-1 ${n.match(p) ? "border-org" : "border-transparent hover:border-white/30"}`}>{n.label}</Link>
+        <Link
+          key={n.href}
+          href={n.href}
+          aria-current={n.match(p) ? "page" : undefined}
+        >
+          {n.label}
+        </Link>
       ))}
     </nav>
   );

@@ -1,32 +1,52 @@
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
-import { getAllMatches } from "@/lib/data";
-import Ticker from "./Ticker";
+import { CLUBS } from "@/lib/clubs";
+import Badge from "./Badge";
 import NavLinks from "./NavLinks";
-import LeagueLogo from "./LeagueLogo";
-
-export default async function Header() {
-  const { matches } = await getAllMatches();
-  const now = Date.now();
-  const live = matches.filter((m) => m.state === "in");
-  const recent = matches.filter((m) => m.state === "post" && now - +new Date(m.kickoff) < 4 * 864e5).slice(-4);
-  const next = matches.filter((m) => m.state === "pre").slice(0, 8);
-  const tick = [...live, ...recent.reverse(), ...next].slice(0, 10);
+import Icon from "./Icon";
+export default function Header() {
   return (
     <>
-      <div className="bg-night text-[#B9B3E0] text-xs hidden md:flex justify-between px-10 py-2">
-        <span>Fan-run hub · Not affiliated with the ISL or any club</span>
-        <span className="flex gap-4"><Link href="/matches">Where to watch</Link><span>Fan zones <b className="text-mint">SOON</b></span></span>
+      <div className="bg-white border-b border-line">
+        <div className="shell club-rail noscroll">
+          <Link
+            href="/clubs"
+            className="eyebrow text-mute hidden lg:block mr-3"
+          >
+            The clubs
+          </Link>
+          {CLUBS.map((c) => (
+            <Link key={c.id} href={`/club/${c.slug}`} aria-label={c.name}>
+              <Badge id={c.id} size={30} />
+            </Link>
+          ))}
+        </div>
       </div>
-      <header className="bg-ind text-white flex items-center px-4 md:px-10 gap-10 h-16 md:h-[76px]">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="w-9 h-9 md:w-10 md:h-10 bg-org rounded-lg flex items-center justify-center d text-ind text-[26px]">{BRAND.monogram}</span>
-          <span className="d text-[28px] md:text-[34px] tracking-wide">{BRAND.name}</span>
-        </Link>
-        <NavLinks />
-        <span className="ml-auto flex items-center gap-3"><span className="text-[13px] opacity-80 hidden sm:inline">All times IST</span><LeagueLogo size={36} /></span>
+      <header className="bg-ind text-white sticky top-0 z-40 border-b border-white/10">
+        <div className="shell flex items-center justify-between gap-6 h-[76px] md:h-[84px]">
+          <Link href="/" className="wordmark" aria-label={`${BRAND.name} home`}>
+            {BRAND.name.toLowerCase()}
+            <span className="wordmark-dot">.</span>
+          </Link>
+          <NavLinks />
+          <div className="flex items-center gap-5">
+            <Link
+              href="/matches"
+              aria-label="Find a match"
+              className="hidden lg:block"
+            >
+              <Icon name="search" />
+            </Link>
+            <Link
+              href="/my-club"
+              className="flex items-center gap-2 text-xs font-semibold border border-white/25 px-3 py-2.5 hover:bg-white/10"
+            >
+              <Icon name="heart" size={16} />
+              <span>My club</span>
+            </Link>
+          </div>
+        </div>
       </header>
-      <Ticker matches={tick} />
     </>
   );
 }

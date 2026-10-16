@@ -1,0 +1,19 @@
+{
+  "_readme": "Verified event listings. Match IDs, teams and IST dates must all agree. No prices or live inventory are inferred. Update when fixtures move. For unlisted matches the UI explicitly offers District search.",
+  "matches": {
+    "401925432": {
+      "homeId": "18851",
+      "awayId": "18000",
+      "date": "2026-10-17",
+      "url": "https://www.district.in/events/isl-2026-27-bengaluru-fc-vs-chennaiyin-fc-buy-tickets",
+      "checkedAt": "2026-10-15"
+    },
+    "401925429": {
+      "homeId": "18894",
+      "awayId": "18002",
+      "date": "2026-10-19",
+      "url": "https://www.district.in/events/isl-2026-27--punjab-fc-vs-mumbai-city-fc-buy-tickets",
+      "checkedAt": "2026-10-15"
+    }
+  }
+}

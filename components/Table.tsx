@@ -2,44 +2,122 @@ import Link from "next/link";
 import Badge from "./Badge";
 import { clubOr } from "@/lib/clubs";
 import type { StandingRow } from "@/lib/types";
-
-const zone = (r: number, n: number) => (r <= 2 ? "#2F7CF6" : r <= 6 ? "#13B35B" : r === n ? "#E5004F" : "transparent");
-export default function Table({ rows, compact = false, highlight, form }: { rows: StandingRow[]; compact?: boolean; highlight?: string; form?: Record<string, string[]> }) {
-  const th = "py-2 px-1 text-[11px] text-mute font-semibold";
+export default function Table({
+  rows,
+  compact = false,
+  highlight,
+  form,
+}: {
+  rows: StandingRow[];
+  compact?: boolean;
+  highlight?: string;
+  form?: Record<string, string[]>;
+}) {
   return (
-    <div>
-      <table className="w-full border-collapse text-[13.5px] text-center">
-        <thead><tr>
-          <th className={th} /><th className={`${th} text-left`}>Club</th><th className={th}>Pl</th>
-          {!compact && <><th className={th}>W</th><th className={th}>D</th><th className={th}>L</th><th className={`${th} hidden sm:table-cell`}>GF</th><th className={`${th} hidden sm:table-cell`}>GA</th></>}
-          <th className={th}>GD</th><th className={th}>Pts</th>
-          {!compact && form && <th className={`${th} hidden md:table-cell`}>Form</th>}
-        </tr></thead>
+    <div className="overflow-x-auto">
+      <table
+        className={`league-table w-full border-collapse ${compact ? "compact" : ""}`}
+      >
+        <caption className="sr-only">
+          League standings. P: played, W: won, D: drawn, L: lost, GF: goals for,
+          GA: goals against, GD: goal difference, Pts: points.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Pos</th>
+            <th scope="col" className="!text-left">
+              Club
+            </th>
+            <th scope="col">P</th>
+            {!compact && (
+              <>
+                <th scope="col" className="hidden sm:table-cell">
+                  W
+                </th>
+                <th scope="col" className="hidden sm:table-cell">
+                  D
+                </th>
+                <th scope="col" className="hidden sm:table-cell">
+                  L
+                </th>
+                <th scope="col" className="hidden md:table-cell">
+                  GF
+                </th>
+                <th scope="col" className="hidden md:table-cell">
+                  GA
+                </th>
+              </>
+            )}
+            <th scope="col">GD</th>
+            <th scope="col">Pts</th>
+            {!compact && form && (
+              <th scope="col" className="hidden lg:table-cell">
+                Last 5
+              </th>
+            )}
+          </tr>
+        </thead>
         <tbody>
           {rows.map((r) => {
             const c = clubOr(r.team.id, r.team.name, r.team.abbr);
             return (
-              <tr key={r.team.id} className={`border-t border-[#ECEAF3] ${highlight === r.team.id ? "bg-[#FFF1E8]" : ""}`}>
-                <td className="py-2 px-1 font-bold" style={{ boxShadow: `inset 3px 0 0 ${zone(r.rank, rows.length)}` }}>{r.rank}</td>
-                <td className="py-2 px-1 text-left">
-                  <Link href={`/club/${c.slug}`} className="flex items-center gap-2 font-semibold hover:underline">
-                    <Badge id={r.team.id} size={22} /><span>{compact ? c.mono : c.name}</span>
+              <tr
+                key={r.team.id}
+                className={highlight === r.team.id ? "bg-mint/40" : ""}
+              >
+                <td className="font-semibold">{r.rank}</td>
+                <td className="club-cell">
+                  <Link
+                    href={`/club/${c.slug}`}
+                    className="inline-flex items-center gap-2 md:gap-3 font-semibold hover:underline"
+                  >
+                    <Badge id={r.team.id} size={compact ? 24 : 30} />
+                    <span>
+                      {compact ? (
+                        c.short
+                      ) : (
+                        <>
+                          <span className="hidden sm:inline">{c.name}</span>
+                          <span className="sm:hidden">{c.mono}</span>
+                        </>
+                      )}
+                    </span>
                   </Link>
                 </td>
                 <td>{r.played}</td>
-                {!compact && <><td>{r.won}</td><td>{r.drawn}</td><td>{r.lost}</td><td className="hidden sm:table-cell">{r.gf}</td><td className="hidden sm:table-cell">{r.ga}</td></>}
-                <td>{r.gd > 0 ? `+${r.gd}` : r.gd}</td><td className="font-bold">{r.points}</td>
-                {!compact && form && <td className="hidden md:table-cell">{(form[r.team.id] ?? []).map((f, i) => (
-                  <span key={i} className="inline-block w-4 h-4 rounded-full text-[9px] text-white font-bold leading-4 ml-0.5" style={{ background: f === "W" ? "#13B35B" : f === "D" ? "#9A98AE" : "#E5004F" }}>{f}</span>
-                ))}</td>}
+                {!compact && (
+                  <>
+                    <td className="hidden sm:table-cell">{r.won}</td>
+                    <td className="hidden sm:table-cell">{r.drawn}</td>
+                    <td className="hidden sm:table-cell">{r.lost}</td>
+                    <td className="hidden md:table-cell">{r.gf}</td>
+                    <td className="hidden md:table-cell">{r.ga}</td>
+                  </>
+                )}
+                <td>{r.gd > 0 ? `+${r.gd}` : r.gd}</td>
+                <td className="font-bold !text-base">{r.points}</td>
+                {!compact && form && (
+                  <td className="hidden lg:table-cell">
+                    <div className="flex gap-1 justify-center">
+                      {(form[r.team.id] ?? []).map((f, i) => (
+                        <span
+                          key={i}
+                          title={
+                            f === "W" ? "Win" : f === "D" ? "Draw" : "Loss"
+                          }
+                          className={`w-5 h-5 text-[10px] leading-5 text-white ${f === "W" ? "bg-[#367851]" : f === "D" ? "bg-[#78868a]" : "bg-[#c04636]"}`}
+                        >
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                )}
               </tr>
             );
           })}
         </tbody>
       </table>
-      <div className="flex gap-4 text-[11px] text-mute mt-3">
-        <span><i className="inline-block w-2 h-2 bg-[#2F7CF6] mr-1" />Top 2</span><span><i className="inline-block w-2 h-2 bg-[#13B35B] mr-1" />Play-offs</span><span><i className="inline-block w-2 h-2 bg-live mr-1" />Bottom</span>
-      </div>
     </div>
   );
 }

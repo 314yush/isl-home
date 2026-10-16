@@ -32,7 +32,8 @@ export interface StandingRow {
   points: number;
 }
 
-export type EventKind = "goal" | "own-goal" | "penalty" | "yellow" | "red" | "sub" | "other";
+export type EventKind =
+  "goal" | "own-goal" | "penalty" | "yellow" | "red" | "sub" | "other";
 export interface MatchEvent {
   minute: string;
   kind: EventKind;
@@ -64,8 +65,12 @@ export interface MatchDetail {
   match: Match;
   events: MatchEvent[];
   stats: TeamStat[];
-  lineups: { home: { formation?: string; players: LineupPlayer[] }; away: { formation?: string; players: LineupPlayer[] } } | null;
+  lineups: {
+    home: { formation?: string; players: LineupPlayer[] };
+    away: { formation?: string; players: LineupPlayer[] };
+  } | null;
   attendance?: number;
+  preview?: MatchPreview;
 }
 
 export interface SquadPlayer {
@@ -91,4 +96,18 @@ export interface FootballProvider {
   getMatchDetail(id: string): Promise<MatchDetail | null>;
   getTeams(): Promise<Team[]>;
   getSquad(teamId: string): Promise<SquadPlayer[]>;
+}
+
+export type HistoricalMatch = Match & { competition: string };
+export interface MatchArticle {
+  title: string;
+  url: string;
+  source: string;
+  published: string;
+  kind: "News" | "Feature" | "Club update";
+}
+export interface MatchPreview {
+  meetings: HistoricalMatch[];
+  form: { home: HistoricalMatch[]; away: HistoricalMatch[] };
+  news: MatchArticle[];
 }

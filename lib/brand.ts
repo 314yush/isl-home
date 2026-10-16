@@ -1,6 +1,5 @@
-/** Single source of truth for the site's name. Rename here only. */
 export const BRAND = {
-  name: "Matchday",
-  tagline: "Indian football, every matchday in IST.",
-  monogram: "M",
+  name: "Maidan",
+  tagline: "The home of Indian football fans.",
+  monogram: "m",
 } as const;

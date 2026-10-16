@@ -1,132 +1,257 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { getAllMatches, getStandings } from "@/lib/data";
-import { clubOr } from "@/lib/clubs";
-import { fmtDay, fmtDayLong, fmtTime, istDate, istWeekStart } from "@/lib/time";
-import { watchFor } from "@/lib/watch";
+import { CLUBS } from "@/lib/clubs";
+import { photo } from "@/lib/assets";
+import { STORIES } from "@/lib/stories";
 import Badge from "@/components/Badge";
-import MatchRow from "@/components/MatchRow";
 import Table from "@/components/Table";
 import StaleBanner from "@/components/StaleBanner";
 import AutoRefresh from "@/components/AutoRefresh";
-import { Duotone } from "@/components/Hero";
-import { heroFor, photo, NEWS_IMAGES } from "@/lib/assets";
-import type { Match } from "@/lib/types";
-
+import StoryCard from "@/components/StoryCard";
+import MatchCard from "@/components/MatchCard";
+import Icon from "@/components/Icon";
 export const dynamic = "force-dynamic";
-
-const NEWS = [
-  { tag: "News", t: "Khel Now: latest ISL news and transfer updates", url: "https://khelnow.com/football/indian-super-league", c: ["#F26A21", "#2D168F"] },
-  { tag: "Analysis", t: "The Bridge: Indian football coverage", url: "https://thebridge.in/football", c: ["#2D168F", "#E5004F"] },
-  { tag: "Reports", t: "Sportstar: ISL match reports and previews", url: "https://sportstar.thehindu.com/football/indian-football/", c: ["#F4C300", "#1E0E62"] },
-];
-
-function groupByDay(ms: Match[]) {
-  const g = new Map<string, Match[]>();
-  for (const m of ms) { const k = istDate(m.kickoff); g.set(k, [...(g.get(k) ?? []), m]); }
-  return [...g.entries()];
-}
-
 export default async function Home() {
-  const [{ matches, meta }, { rows, meta: smeta }] = await Promise.all([getAllMatches(), getStandings()]);
-  const live = matches.filter((m) => m.state === "in");
-  const next = matches.find((m) => m.state === "pre");
-  const last = [...matches].reverse().find((m) => m.state === "post");
-  const hero = live[0] ?? next ?? last;
-  const anchor = hero ?? matches[0];
-  const wk = anchor ? istWeekStart(anchor.kickoff) : "";
-  const week = matches.filter((m) => istWeekStart(m.kickoff) === wk);
-  const latest = matches.filter((m) => m.state === "post").slice(-3).reverse();
-  const wkEnd = wk ? new Date(new Date(wk + "T00:00:00Z").getTime() + 6 * 864e5).toISOString() : "";
-
-  const thisWeek = (
-<section className="card p-5">
-            <div className="flex justify-between items-center mb-1">
-              <h3 className="d text-ind text-[28px]">This week</h3><Link href="/matches" className="text-xs font-bold text-ind">All matches →</Link>
-            </div>
-            {wk && <p className="text-xs text-mute mb-1">{fmtDay(wk + "T06:00:00Z")} – {fmtDay(wkEnd)} · IST</p>}
-            {week.length === 0 && <p className="text-sm text-mute py-4">No fixtures this week.</p>}
-            {groupByDay(week).map(([d, ms]) => (
-              <div key={d}>
-                <p className="text-[11px] font-bold text-mute uppercase tracking-wider pt-3 pb-1">{fmtDayLong(ms[0].kickoff)}</p>
-                {ms.map((m) => <MatchRow key={m.id} m={m} />)}
-              </div>
-            ))}
-          </section>
-  );
+  const [{ matches, meta }, { rows, meta: smeta }] = await Promise.all([
+    getAllMatches(),
+    getStandings(),
+  ]);
+  const featured = [
+    ...matches.filter((m) => m.state === "in"),
+    ...matches.filter((m) => m.state === "pre"),
+    ...matches.filter((m) => m.state === "post").reverse(),
+  ].slice(0, 3);
+  const hero = photo("salt_lake_stadium_indian_super_league_opener");
   return (
     <>
-      <StaleBanner meta={{ ...meta, stale: meta.stale || smeta.stale }} empty={matches.length === 0} />
-      {live.length > 0 && <AutoRefresh seconds={30} label={false} />}
-      <main className="max-w-[1440px] mx-auto px-3 md:px-10 pt-4 md:pt-6 grid lg:grid-cols-[1fr_380px] gap-4 md:gap-5">
-        <div className="flex flex-col gap-4 md:gap-5 min-w-0">
-          {hero && <HeroCard m={hero} />}
-          <div className="lg:hidden">{thisWeek}</div>
-          <section>
-            <h2 className="d text-ind text-[30px] md:text-[40px] mb-3">Latest results</h2>
-            <div className="grid sm:grid-cols-3 gap-3 md:gap-4">
-              {latest.map((m) => {
-                const h = clubOr(m.home.id, m.home.name, m.home.abbr), a = clubOr(m.away.id, m.away.name, m.away.abbr);
-                return (
-                  <Link key={m.id} href={`/match/${m.id}`} className="card block hover:-translate-y-0.5 transition">
-                    <Duotone c1={h.primary} c2={a.primary} img={heroFor(h.slug)} className="h-24 md:h-36">
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <span className="d absolute left-3 bottom-2 text-white text-[44px] drop-shadow z-10">{m.home.score}-{m.away.score}</span>
-                    </Duotone>
-                    <div className="p-3.5">
-                      <p className="tag">Full time · {fmtDay(m.kickoff)}</p>
-                      <p className="font-bold text-[17px] leading-tight mt-1">{h.name} {m.home.score}–{m.away.score} {a.name}</p>
+      <AutoRefresh label={false} />
+      <StaleBanner
+        meta={{ ...meta, stale: meta.stale || smeta.stale }}
+        empty={!matches.length}
+      />
+      <main>
+        <div className="shell pt-6 md:pt-8">
+          <div className="flex justify-between items-center mb-5">
+            <p className="eyebrow text-mute">Indian football. One home.</p>
+            <span className="eyebrow text-mute hidden sm:inline">
+              Independent. Fan-powered.
+            </span>
+          </div>
+          <div className="hero-layout reveal">
+            <section className="hero-feature">
+              {hero && (
+                <img
+                  className="hero-photo"
+                  src={hero.src}
+                  alt="Supporters filling the stands at Salt Lake Stadium"
+                  fetchPriority="high"
+                />
+              )}
+              <div className="absolute top-6 left-6 md:left-10 z-10 flex items-center gap-2">
+                <span className="w-2 h-2 bg-org" />
+                <span className="eyebrow text-white">
+                  The beautiful game. Our way.
+                </span>
+              </div>
+              <div className="hero-copy">
+                <p className="eyebrow text-white/70">
+                  From the streets to the stands
+                </p>
+                <h1 className="hero-title">
+                  One game.
+                  <br />A billion
+                  <br />
+                  <span className="text-org">heartbeats.</span>
+                </h1>
+                <p className="text-white/75 text-sm md:text-base max-w-md leading-relaxed mb-6">
+                  Every club. Every chant. Every last-minute winner.
+                  <br className="hidden sm:block" /> Your home for the game we
+                  call our own.
+                </p>
+                <Link
+                  href="/stories/a-game-that-belongs-to-everyone"
+                  className="btn btn-primary"
+                >
+                  Welcome to Maidan <Icon name="arrow" size={18} />
+                </Link>
+              </div>
+            </section>
+            <aside className="bg-white border border-line flex flex-col">
+              <div className="px-5 py-5 border-b border-line flex justify-between items-center">
+                <h2 className="d text-[28px]">Match centre</h2>
+                <span className="eyebrow text-mute">IST</span>
+              </div>
+              <div className="flex-1">
+                {featured.length ? (
+                  featured.slice(0, 2).map((m) => (
+                    <div
+                      key={m.id}
+                      className="[&>div]:border-0 [&>div]:border-b"
+                    >
+                      <MatchCard match={m} />
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-          <section>
-            <div className="flex items-end justify-between mb-3"><h2 className="d text-ind text-[30px] md:text-[40px]">Elsewhere</h2><span className="text-xs text-mute">Headlines live on the publishers&apos; sites</span></div>
-            <div className="grid sm:grid-cols-3 gap-3 md:gap-4">
-              {NEWS.map((n, i) => (
-                <a key={n.url} href={n.url} target="_blank" rel="noopener" className="card block">
-                  <Duotone c1={n.c[0]} c2={n.c[1]} img={photo(NEWS_IMAGES[i])} tint={false} className="h-24 md:h-32" />
-                  <div className="p-3.5"><p className="tag">{n.tag} ↗</p><p className="font-bold text-[16px] leading-tight mt-1">{n.t}</p></div>
-                </a>
-              ))}
-            </div>
-          </section>
+                  ))
+                ) : (
+                  <div className="p-6 text-sm text-mute leading-relaxed">
+                    Fixtures are unavailable right now. We’ll refresh them
+                    automatically.
+                  </div>
+                )}
+              </div>
+              <Link
+                href="/matches"
+                className="p-5 text-link justify-between bg-bg"
+              >
+                All fixtures & results <Icon name="arrow" size={18} />
+              </Link>
+              <div className="bg-mint px-5 py-4 flex items-center gap-3">
+                <Icon name="ball" size={26} />
+                <p className="text-xs leading-relaxed">
+                  Different colours.
+                  <br />
+                  <b>The same love for the game.</b>
+                </p>
+              </div>
+            </aside>
+          </div>
+          <div className="flex items-center gap-3 py-3 text-[10px] text-mute border-b border-line">
+            <span className="eyebrow text-[9px]">From the archive</span>
+            <span className="w-1 h-1 bg-mute rounded-full" />
+            <span>Salt Lake Stadium, Kolkata</span>
+            <Link
+              href="/credits"
+              className="ml-auto underline underline-offset-2"
+            >
+              Photo credits
+            </Link>
+          </div>
         </div>
-        <aside className="flex flex-col gap-4 md:gap-5">
-          <div className="hidden lg:block">{thisWeek}</div>
-          <section className="card p-5">
-            <div className="flex justify-between items-center mb-2"><h3 className="d text-ind text-[28px]">Table</h3><Link href="/table" className="text-xs font-bold text-ind">Full table →</Link></div>
-            {rows.length ? <Table rows={rows} compact /> : <p className="text-sm text-mute">Table unavailable right now.</p>}
-          </section>
-          <div className="bg-mint rounded-[10px] px-5 py-4 text-[#062B22]"><p className="d text-[22px]">Fan zones · coming soon</p><p className="text-[13.5px] mt-1">Watch-parties and travel groups for all 13 clubs.</p></div>
-        </aside>
+        <section className="shell py-12 md:py-16">
+          <div className="section-head">
+            <div>
+              <p className="eyebrow text-mute mb-3">Beyond the ninety</p>
+              <h2 className="section-title">From the stands</h2>
+            </div>
+            <Link href="/stories" className="text-link">
+              All stories <Icon name="arrow" size={17} />
+            </Link>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {STORIES.slice(1).map((s) => (
+              <StoryCard key={s.slug} story={s} />
+            ))}
+          </div>
+        </section>
+        <section className="bg-[#e9ede6] py-12 md:py-16 border-y border-line">
+          <div className="shell grid lg:grid-cols-[1fr_1.15fr] gap-10 lg:gap-20">
+            <div className="flex flex-col justify-between">
+              <div>
+                <p className="eyebrow text-mute mb-3">Every point matters</p>
+                <h2 className="d text-[58px] md:text-[76px]">
+                  The race.
+                  <br />
+                  The rivalries.
+                  <br />
+                  <span className="text-[#b94322]">The table.</span>
+                </h2>
+                <p className="text-sm text-mute max-w-sm leading-relaxed my-6">
+                  Follow the season as it unfolds. See who’s setting the pace
+                  and where your club stands.
+                </p>
+                <Link href="/table" className="btn btn-dark">
+                  Explore the table <Icon name="arrow" size={18} />
+                </Link>
+              </div>
+              <div className="flex gap-8 mt-10 pt-6 border-t border-[#c8d0c7]">
+                <div>
+                  <b className="d text-4xl">{rows.length || CLUBS.length}</b>
+                  <p className="eyebrow text-mute mt-2">
+                    {rows.length ? "Clubs in the table" : "Club profiles"}
+                  </p>
+                </div>
+                <div>
+                  <b className="d text-4xl">
+                    {matches.filter((m) => m.state === "post").length || "—"}
+                  </b>
+                  <p className="eyebrow text-mute mt-2">Results in the feed</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white border border-line p-5 md:p-7">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="d text-[28px]">League standings</h3>
+                <span className="eyebrow text-mute">Top 6</span>
+              </div>
+              {rows.length ? (
+                <Table rows={rows.slice(0, 6)} compact />
+              ) : (
+                <div className="empty-state">
+                  <h3>Table on its way</h3>
+                  <p className="text-sm text-mute">
+                    The standings feed is currently unavailable.
+                  </p>
+                </div>
+              )}
+              <Link
+                href="/table"
+                className="text-link justify-between w-full pt-5 mt-3 border-t border-line"
+              >
+                View full standings <Icon name="arrow" size={16} />
+              </Link>
+            </div>
+          </div>
+        </section>
+        <section className="shell py-12 md:py-16">
+          <div className="section-head">
+            <div>
+              <p className="eyebrow text-mute mb-3">Find your colours</p>
+              <h2 className="section-title">One league. Many homes.</h2>
+            </div>
+            <Link href="/clubs" className="text-link">
+              All clubs <Icon name="arrow" size={17} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {CLUBS.filter((c) =>
+              [
+                "bengaluru-fc",
+                "kerala-blasters",
+                "mohun-bagan-sg",
+                "mumbai-city",
+                "fc-goa",
+                "east-bengal",
+              ].includes(c.slug),
+            ).map((c) => (
+              <Link
+                href={`/club/${c.slug}`}
+                key={c.id}
+                className="group border border-line bg-white p-6 text-center hover:border-ind"
+              >
+                <div className="flex justify-center mb-5 group-hover:-translate-y-1 transition-transform">
+                  <Badge id={c.id} size={58} />
+                </div>
+                <h3 className="font-display text-xl font-semibold">{c.name}</h3>
+                <p className="text-xs text-mute mt-1">{c.city}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+        <section className="shell">
+          <div className="bg-org p-7 md:p-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-7 relative overflow-hidden">
+            <div>
+              <p className="eyebrow mb-3">Your colours. Your corner.</p>
+              <h2 className="d text-[48px] md:text-[66px]">It’s personal.</h2>
+              <p className="mt-3 text-sm">
+                Pick your club. Keep your next match close.
+              </p>
+            </div>
+            <Link href="/my-club" className="btn btn-dark">
+              Find my club <Icon name="heart" size={18} />
+            </Link>
+          </div>
+        </section>
       </main>
     </>
-  );
-}
-
-function HeroCard({ m }: { m: Match }) {
-  const h = clubOr(m.home.id, m.home.name, m.home.abbr), a = clubOr(m.away.id, m.away.name, m.away.abbr);
-  const w = watchFor(m.id);
-  const label = m.state === "in" ? "Live now" : m.state === "pre" ? "Next up" : "Latest result";
-  return (
-    <Link href={`/match/${m.id}`} className="block rounded-[10px] overflow-hidden">
-      <Duotone c1={h.primary} c2={a.primary} img={heroFor(h.slug)} tint={false} className="h-[360px] md:h-[440px]">
-        <div className="absolute inset-0 bg-gradient-to-t from-ind via-ind/50 to-transparent" />
-        <div className="absolute left-5 right-5 md:left-10 md:right-10 bottom-6 md:bottom-9 text-white">
-          {m.state === "in" ? <span className="live">LIVE {m.statusText}</span> : <span className="bg-org text-ind text-[11px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">{label}</span>}
-          <div className="flex items-center gap-3 md:gap-5 mt-4">
-            <Badge id={m.home.id} size={64} />
-            {m.state === "pre"
-              ? <span className="d text-[44px] md:text-[64px]">{fmtTime(m.kickoff)}<span className="text-[22px] md:text-[28px] ml-2 opacity-80">IST</span></span>
-              : <span className="d text-[64px] md:text-[88px]">{m.home.score} - {m.away.score}</span>}
-            <Badge id={m.away.id} size={64} />
-          </div>
-          <h1 className="d text-[38px] md:text-[60px] mt-3 max-w-[820px]">{h.name} <span className="text-org">v</span> {a.name}</h1>
-          <p className="text-[13px] md:text-sm opacity-85 mt-2">{fmtDayLong(m.kickoff)} · {fmtTime(m.kickoff)} IST{m.venue ? ` · ${m.venue}` : ""}{m.state !== "post" ? ` · ${w.streams.map((s) => s.label.replace("Watch free on ", "Free on ")).join(" / ")}` : ""}</p>
-        </div>
-      </Duotone>
-    </Link>
   );
 }
